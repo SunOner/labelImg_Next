@@ -15,18 +15,6 @@ This repository is a fork of the popular image annotation tool, LabelImg, origin
 
 LabelImg is now part of the Label Studio community, a modern, multi-modal data annotation tool. Label Studio is the most flexible open-source data labeling tool for images, text, hypertext, audio, video, and time-series data. To get started, [install Label Studio](https://labelstud.io/guide/install.html) and join the [Slack community](https://label-studio.slack.com/).
 
-## Installation
-
-### Get from PyPI (Python 3.0 or above)
-
-This is the simplest method for installation on modern Linux distributions such as Ubuntu and Fedora.
-
-```shell
-pip3 install labelImg
-labelImg
-labelImg [IMAGE_PATH] [PRE-DEFINED CLASS FILE]
-```
-
 ### Build from Source (Windows)
 
 1. Install [Python](https://www.python.org/downloads/windows/), [PyQt5](https://www.riverbankcomputing.com/software/pyqt/download5), and [lxml](http://lxml.de/installation.html).
