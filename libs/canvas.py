@@ -1,13 +1,6 @@
-
-try:
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-    from PyQt5.QtWidgets import *
-except ImportError:
-    from PyQt4.QtGui import *
-    from PyQt4.QtCore import *
-
-# from PyQt4.QtOpenGL import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 from libs.shape import Shape
 from libs.utils import distance
@@ -17,9 +10,6 @@ CURSOR_POINT = Qt.PointingHandCursor
 CURSOR_DRAW = Qt.CrossCursor
 CURSOR_MOVE = Qt.ClosedHandCursor
 CURSOR_GRAB = Qt.OpenHandCursor
-
-# class Canvas(QGLWidget):
-
 
 class Canvas(QWidget):
     zoomRequest = pyqtSignal(int)
@@ -363,16 +353,24 @@ class Canvas(QWidget):
     def select_shape_point(self, point):
         """Select the first shape created which contains this point."""
         self.de_select_shape()
-        if self.selected_vertex():  # A vertex is marked for selection.
-            index, shape = self.h_vertex, self.h_shape
-            shape.highlight_vertex(index, shape.MOVE_VERTEX)
-            self.select_shape(shape)
-            return self.h_vertex
+        
+        for shape in reversed(self.shapes):
+            if self.isVisible(shape):
+                index = shape.nearest_vertex(point, self.epsilon)
+                if index is not None:
+                    if self.selected_vertex():
+                        self.h_shape.highlight_clear()
+                    self.h_vertex, self.h_shape = index, shape
+                    shape.highlight_vertex(index, shape.MOVE_VERTEX)
+                    self.select_shape(shape)
+                    return self.h_vertex
+                    
         for shape in reversed(self.shapes):
             if self.isVisible(shape) and shape.contains_point(point):
                 self.select_shape(shape)
                 self.calculate_offsets(shape, point)
                 return self.selected_shape
+                
         return None
 
     def calculate_offsets(self, shape, point):

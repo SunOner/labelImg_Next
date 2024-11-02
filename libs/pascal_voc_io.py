@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf8 -*-
-import sys
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element, SubElement
 from lxml import etree
@@ -8,12 +5,10 @@ import codecs
 from libs.constants import DEFAULT_ENCODING
 from libs.ustr import ustr
 
-
 XML_EXT = '.xml'
 ENCODE_METHOD = DEFAULT_ENCODING
 
 class PascalVocWriter:
-
     def __init__(self, folder_name, filename, img_size, database_src='Unknown', local_img_path=None):
         self.folder_name = folder_name
         self.filename = filename
@@ -30,9 +25,6 @@ class PascalVocWriter:
         rough_string = ElementTree.tostring(elem, 'utf8')
         root = etree.fromstring(rough_string)
         return etree.tostring(root, pretty_print=True, encoding=ENCODE_METHOD).replace("  ".encode(), "\t".encode())
-        # minidom does not support UTF-8
-        # reparsed = minidom.parseString(rough_string)
-        # return reparsed.toprettyxml(indent="\t", encoding=ENCODE_METHOD)
 
     def gen_xml(self):
         """

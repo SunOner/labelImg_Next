@@ -1,10 +1,4 @@
-# Copyright (c) 2016 Tzutalin
-# Create by TzuTaLin <tzu.ta.lin@gmail.com>
-
-try:
-    from PyQt5.QtGui import QImage
-except ImportError:
-    from PyQt4.QtGui import QImage
+from PyQt5.QtGui import QImage
 
 import os.path
 from enum import Enum
@@ -14,12 +8,10 @@ from libs.pascal_voc_io import PascalVocWriter
 from libs.pascal_voc_io import XML_EXT
 from libs.yolo_io import YOLOWriter
 
-
 class LabelFileFormat(Enum):
     PASCAL_VOC = 1
     YOLO = 2
     CREATE_ML = 3
-
 
 class LabelFileError(Exception):
     pass

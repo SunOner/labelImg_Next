@@ -1,15 +1,10 @@
-try:
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-    from PyQt5.QtWidgets import *
-except ImportError:
-    from PyQt4.QtGui import *
-    from PyQt4.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 from libs.utils import new_icon, label_validator, trimmed
 
 BB = QDialogButtonBox
-
 
 class LabelDialog(QDialog):
 
@@ -82,7 +77,7 @@ class LabelDialog(QDialog):
             if cursor_pos.x() > max_global.x():
                 cursor_pos.setX(max_global.x())
             if cursor_pos.y() > max_global.y():
-                cursor_pos.setY(max_global.y())
+                cursor_pos.setY(max_global.y()-100)
             self.move(cursor_pos)
         return trimmed(self.edit.text()) if self.exec_() else None
 

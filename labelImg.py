@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import argparse
 import codecs
 import os.path
@@ -9,21 +7,11 @@ import sys
 import webbrowser as wb
 from functools import partial
 
-try:
-    from PyQt5.QtGui import *
-    from PyQt5.QtCore import *
-    from PyQt5.QtWidgets import *
-except ImportError:
-    # needed for py3+qt4
-    # Ref:
-    # http://pyqt.sourceforge.net/Docs/PyQt4/incompatible_apis.html
-    # http://stackoverflow.com/questions/21217399/pyqt4-qtcore-qvariant-object-instead-of-a-string
-    if sys.version_info.major >= 3:
-        import sip
-        sip.setapi('QVariant', 2)
-    from PyQt4.QtGui import *
-    from PyQt4.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
+import qdarkstyle
 from libs.combobox import ComboBox
 from libs.default_label_combobox import DefaultLabelComboBox
 from libs.resources import *
@@ -50,7 +38,6 @@ from libs.hashableQListWidgetItem import HashableQListWidgetItem
 
 __appname__ = 'labelImg'
 
-
 class WindowMixin(object):
 
     def menu(self, title, actions=None):
@@ -68,7 +55,6 @@ class WindowMixin(object):
             add_actions(toolbar, actions)
         self.addToolBar(Qt.LeftToolBarArea, toolbar)
         return toolbar
-
 
 class MainWindow(QMainWindow, WindowMixin):
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = list(range(3))
@@ -242,6 +228,8 @@ class MainWindow(QMainWindow, WindowMixin):
         save = action(get_str('save'), self.save_file,
                       'Ctrl+S', 'save', get_str('saveDetail'), enabled=False)
 
+        self.cur_img_idx = settings.get(SETTING_LAST_IMAGE_INDEX, 0)
+        
         def get_format_meta(format):
             """
             returns a tuple containing (title, icon_name) of the selected format
@@ -426,6 +414,13 @@ class MainWindow(QMainWindow, WindowMixin):
         self.display_label_option.setChecked(settings.get(SETTING_PAINT_LABEL, False))
         self.display_label_option.triggered.connect(self.toggle_paint_labels_option)
 
+        dark_mode_init = True # Set the initial mode
+        self.dark_mode_action = QAction('Dark Mode', self)
+        self.dark_mode_action.setCheckable(True)
+        self.dark_mode_action.setChecked(dark_mode_init)  
+        self.dark_mode_action.triggered.connect(self.toggle_dark_mode)
+        self.toggle_dark_mode() if dark_mode_init else None
+        
         add_actions(self.menus.file,
                     (open, open_dir, change_save_dir, open_annotation, copy_prev_bounding, self.menus.recentFiles, save, save_format, save_as, close, reset_all, delete_image, quit))
         add_actions(self.menus.help, (help_default, show_info, show_shortcut))
@@ -433,6 +428,7 @@ class MainWindow(QMainWindow, WindowMixin):
             self.auto_saving,
             self.single_class_mode,
             self.display_label_option,
+            self.dark_mode_action,
             labels, advanced_mode, None,
             hide_all, show_all, None,
             zoom_in, zoom_out, zoom_org, None,
@@ -680,7 +676,7 @@ class MainWindow(QMainWindow, WindowMixin):
             if shutil.which(browser.lower()):  # 'chrome' not in wb._browsers in windows
                 wb.register('chrome', None, wb.BackgroundBrowser('chrome'))
             else:
-                chrome_path="D:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
+                chrome_path="C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
                 if os.path.isfile(chrome_path):
                     wb.register('chrome', None, wb.BackgroundBrowser(chrome_path))
             try:
@@ -762,7 +758,6 @@ class MainWindow(QMainWindow, WindowMixin):
             self.set_dirty()
             self.update_combo_box()
 
-    # Tzutalin 20160906 : Add file list and dock to move faster
     def file_item_double_clicked(self, item=None):
         self.cur_img_idx = self.m_img_list.index(ustr(item.text()))
         filename = self.m_img_list[self.cur_img_idx]
@@ -813,6 +808,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.actions.shapeFillColor.setEnabled(selected)
 
     def add_label(self, shape):
+        if shape is None:
+            return
         shape.paint_label = self.display_label_option.isChecked()
         item = HashableQListWidgetItem(shape.label)
         item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
@@ -827,7 +824,6 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def remove_label(self, shape):
         if shape is None:
-            # print('rm empty label')
             return
         item = self.shapes_to_items[shape]
         self.label_list.takeItem(self.label_list.row(item))
@@ -919,7 +915,6 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def copy_selected_shape(self):
         self.add_label(self.canvas.copy_selected_shape())
-        # fix copy and delete
         self.shape_selection_changed(True)
 
     def combo_selection_changed(self, index):
@@ -941,7 +936,6 @@ class MainWindow(QMainWindow, WindowMixin):
             self._no_selection_slot = True
             self.canvas.select_shape(self.items_to_shapes[item])
             shape = self.items_to_shapes[item]
-            # Add Chris
             self.diffc_button.setChecked(shape.difficult)
 
     def label_item_changed(self, item):
@@ -951,7 +945,7 @@ class MainWindow(QMainWindow, WindowMixin):
             shape.label = item.text()
             shape.line_color = generate_color_by_text(shape.label)
             self.set_dirty()
-        else:  # User probably changed item visibility
+        else:
             self.canvas.set_shape_visible(shape, item.checkState() == Qt.Checked)
 
     # Callback functions:
@@ -965,7 +959,6 @@ class MainWindow(QMainWindow, WindowMixin):
                 self.label_dialog = LabelDialog(
                     parent=self, list_item=self.label_hist)
 
-            # Sync single class mode from PR#106
             if self.single_class_mode.isChecked() and self.lastLabel:
                 text = self.lastLabel
             else:
@@ -974,7 +967,6 @@ class MainWindow(QMainWindow, WindowMixin):
         else:
             text = self.default_label
 
-        # Add Chris
         self.diffc_button.setChecked(False)
         if text is not None:
             self.prev_label_text = text
@@ -991,7 +983,6 @@ class MainWindow(QMainWindow, WindowMixin):
             if text not in self.label_hist:
                 self.label_hist.append(text)
         else:
-            # self.canvas.undoLastLine()
             self.canvas.reset_all_lines()
 
     def scroll_request(self, delta, orientation):
@@ -1099,11 +1090,9 @@ class MainWindow(QMainWindow, WindowMixin):
         # Make sure that filePath is a regular python string, rather than QString
         file_path = ustr(file_path)
 
-        # Fix bug: An  index error after select a directory when open a new file.
         unicode_file_path = ustr(file_path)
         unicode_file_path = os.path.abspath(unicode_file_path)
-        # Tzutalin 20160906 : Add file list and dock to move faster
-        # Highlight the file item
+
         if unicode_file_path and self.file_list_widget.count() > 0:
             if unicode_file_path in self.m_img_list:
                 index = self.m_img_list.index(unicode_file_path)
@@ -1164,8 +1153,9 @@ class MainWindow(QMainWindow, WindowMixin):
 
             # Default : select last item if there is at least one item
             if self.label_list.count():
-                self.label_list.setCurrentItem(self.label_list.item(self.label_list.count() - 1))
-                self.label_list.item(self.label_list.count() - 1).setSelected(True)
+                item_idx = self.label_list.count() - 1
+                self.label_list.setCurrentItem(self.label_list.item(item_idx))
+                self.label_list.item(item_idx).setSelected(True)
 
             self.canvas.setFocus(True)
             return True
@@ -1357,7 +1347,11 @@ class MainWindow(QMainWindow, WindowMixin):
             target_dir_path = ustr(default_open_dir_path)
         self.last_open_dir = target_dir_path
         self.import_dir_images(target_dir_path)
-        self.default_save_dir = target_dir_path
+        if not self.default_save_dir:
+            self.default_save_dir = target_dir_path
+        file_containing_labels = os.path.join(self.default_save_dir, 'classes.txt')
+        if not self.label_hist:
+            self.load_predefined_classes(file_containing_labels)
         if self.file_path:
             self.show_bounding_box_from_annotation_file(file_path=self.file_path)
 
@@ -1668,10 +1662,15 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def toggle_draw_square(self):
         self.canvas.set_drawing_shape_to_square(self.draw_squares_option.isChecked())
+        
+    def toggle_dark_mode(self):
+        if self.dark_mode_action.isChecked():
+            self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        else:
+            self.setStyleSheet("")
 
 def inverted(color):
     return QColor(*[255 - v for v in color.getRgb()])
-
 
 def read(filename, default=None):
     try:
@@ -1692,7 +1691,6 @@ def get_main_app(argv=None):
     app = QApplication(argv)
     app.setApplicationName(__appname__)
     app.setWindowIcon(new_icon("app"))
-    # Tzutalin 201705+: Accept extra agruments to change predefined class file
     argparser = argparse.ArgumentParser()
     argparser.add_argument("image_dir", nargs="?")
     argparser.add_argument("class_file",

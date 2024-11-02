@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf8 -*-
 import json
 from pathlib import Path
 
@@ -8,7 +6,6 @@ import os
 
 JSON_EXT = '.json'
 ENCODE_METHOD = DEFAULT_ENCODING
-
 
 class CreateMLWriter:
     def __init__(self, folder_name, filename, img_size, shapes, output_file, database_src='Unknown', local_img_path=None):

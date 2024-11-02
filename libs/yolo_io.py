@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf8 -*-
 import codecs
 import os
 
@@ -9,7 +7,6 @@ TXT_EXT = '.txt'
 ENCODE_METHOD = DEFAULT_ENCODING
 
 class YOLOWriter:
-
     def __init__(self, folder_name, filename, img_size, database_src='Unknown', local_img_path=None):
         self.folder_name = folder_name
         self.filename = filename
@@ -65,11 +62,8 @@ class YOLOWriter:
 
         for box in self.box_list:
             class_index, x_center, y_center, w, h = self.bnd_box_to_yolo_line(box, class_list)
-            # print (classIndex, x_center, y_center, w, h)
             out_file.write("%d %.6f %.6f %.6f %.6f\n" % (class_index, x_center, y_center, w, h))
 
-        # print (classList)
-        # print (out_class_file)
         for c in class_list:
             out_class_file.write(c+'\n')
 
@@ -92,12 +86,8 @@ class YoloReader:
         else:
             self.class_list_path = class_list_path
 
-        # print (file_path, self.class_list_path)
-
         classes_file = open(self.class_list_path, 'r')
         self.classes = classes_file.read().strip('\n').split('\n')
-
-        # print (self.classes)
 
         img_size = [image.height(), image.width(),
                     1 if image.isGrayscale() else 3]
@@ -105,10 +95,7 @@ class YoloReader:
         self.img_size = img_size
 
         self.verified = False
-        # try:
         self.parse_yolo_format()
-        # except:
-        #     pass
 
     def get_shapes(self):
         return self.shapes
