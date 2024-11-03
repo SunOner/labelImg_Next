@@ -11,7 +11,10 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
+import numpy as np
 import qdarkstyle
+import torch
+from ultralytics import YOLO
 from libs.combobox import ComboBox
 from libs.default_label_combobox import DefaultLabelComboBox
 from libs.resources import *
@@ -198,6 +201,31 @@ class MainWindow(QMainWindow, WindowMixin):
         self.dock_features = QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable
         self.dock.setFeatures(self.dock.features() ^ self.dock_features)
 
+        self.settings_dock = QDockWidget("Settings", self)
+        self.settings_dock.setObjectName("Settings")
+        self.settings_widget = QWidget()
+        self.settings_layout = QVBoxLayout()
+
+        self.model_combobox = QComboBox()
+        self.load_models()
+        self.settings_layout.addWidget(QLabel("Model:"))
+        self.settings_layout.addWidget(self.model_combobox)
+
+        self.conf_slider = QSlider(Qt.Horizontal)
+        self.conf_slider.setMinimum(0)
+        self.conf_slider.setMaximum(100)
+        self.conf_slider.setValue(25)
+        self.settings_layout.addWidget(QLabel("Confidence Threshold:"))
+        self.settings_layout.addWidget(self.conf_slider)
+
+        self.device_checkbox = QCheckBox("Use CPU")
+        self.device_checkbox.setChecked(False)
+        self.settings_layout.addWidget(self.device_checkbox)
+
+        self.settings_widget.setLayout(self.settings_layout)
+        self.settings_dock.setWidget(self.settings_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.settings_dock)
+
         # Actions
         action = partial(new_action, self)
         quit = action(get_str('quit'), self.close,
@@ -223,11 +251,14 @@ class MainWindow(QMainWindow, WindowMixin):
                                  'a', 'prev', get_str('prevImgDetail'))
 
         verify = action(get_str('verifyImg'), self.verify_image,
-                        'space', 'verify', get_str('verifyImgDetail'))
+                        'Ctrl+space', 'verify', get_str('verifyImgDetail'))
 
         save = action(get_str('save'), self.save_file,
                       'Ctrl+S', 'save', get_str('saveDetail'), enabled=False)
 
+        auto_annotate = action('Auto-annotate', self.auto_annotate_image,
+                            'space', 'auto', 'Automatically annotate the current image', enabled=True)
+        
         self.cur_img_idx = settings.get(SETTING_LAST_IMAGE_INDEX, 0)
         
         def get_format_meta(format):
@@ -441,18 +472,23 @@ class MainWindow(QMainWindow, WindowMixin):
         add_actions(self.canvas.menus[0], self.actions.beginnerContext)
         add_actions(self.canvas.menus[1], (
             action('&Copy here', self.copy_shape),
-            action('&Move here', self.move_shape)))
+            action('&Move here', self.move_shape)
+            )
+        )
 
         self.tools = self.toolbar('Tools')
+        
+        self.tools.addAction(auto_annotate)
+        
         self.actions.beginner = (
             open, open_dir, change_save_dir, open_next_image, open_prev_image, verify, save, save_format, None, create, copy, delete, None,
             zoom_in, zoom, zoom_out, fit_window, fit_width, None,
-            light_brighten, light, light_darken, light_org)
+            light_brighten, light, light_darken, light_org, auto_annotate)
 
         self.actions.advanced = (
             open, open_dir, change_save_dir, open_next_image, open_prev_image, save, save_format, None,
             create_mode, edit_mode, None,
-            hide_all, show_all)
+            hide_all, show_all, auto_annotate)
 
         self.statusBar().showMessage('%s started.' % __appname__)
         self.statusBar().show()
@@ -534,6 +570,82 @@ class MainWindow(QMainWindow, WindowMixin):
         # Open Dir if default file
         if self.file_path and os.path.isdir(self.file_path):
             self.open_dir_dialog(dir_path=self.file_path, silent=True)
+
+    def reset_all_shapes(self):
+        self.items_to_shapes.clear()
+        self.shapes_to_items.clear()
+        self.label_list.clear()
+        self.canvas.shapes = []
+        self.canvas.update()
+    
+    def load_models(self):
+        model_dir = './models'
+        if not os.path.exists(model_dir):
+            QMessageBox.warning(self, "Warning", f"The models folder '{model_dir}' was not found.")
+            return
+        model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.pt')]
+        if not model_files:
+            QMessageBox.warning(self, "Warning", "No '.pt' model files were found in the models folder.")
+            return
+        self.model_combobox.addItems(model_files)
+    
+    def auto_annotate_image(self):
+        if not self.file_path:
+            QMessageBox.warning(self, "Warning", "The annotation image has not been uploaded.")
+            return
+
+        image = QImage(self.file_path)
+        if image.isNull():
+            QMessageBox.warning(self, "Warning", "The image could not be uploaded.")
+            return
+
+        image_numpy = self.qimage_to_numpy(image)
+
+        model_path = self.model_combobox.currentText()
+        conf_threshold = self.conf_slider.value() / 100.0
+        device = 'cpu' if self.device_checkbox.isChecked() else 'cuda' if torch.cuda.is_available() else 'cpu'
+
+        if not model_path or not os.path.exists(model_path):
+            QMessageBox.warning(self, "Warning", "The model is not selected or does not exist.")
+            return
+
+        model = YOLO(
+            model=model_path,
+            task="detect",
+            verbose=False
+        )
+
+        results = model.predict(source=image_numpy, conf=conf_threshold, device=device)
+
+        self.reset_all_shapes()
+
+        for result in results:
+            boxes = result.boxes.xyxy.cpu().numpy()
+            classes = result.boxes.cls.cpu().numpy()
+
+            for box, cls in zip(boxes, classes):
+                x_min, y_min, x_max, y_max = box
+                label = model.names[int(cls)]
+
+                points = [(x_min, y_min), (x_max, y_min), (x_max, y_max), (x_min, y_max)]
+                shape = Shape(label=label)
+                for x, y in points:
+                    shape.add_point(QPointF(x, y))
+                shape.close()
+
+                self.add_label(shape)
+
+        self.canvas.update()  # Обновление канваса
+        self.set_dirty()
+    
+    def qimage_to_numpy(self, qimage):
+        qimage = qimage.convertToFormat(QImage.Format.Format_RGBA8888)
+        width = qimage.width()
+        height = qimage.height()
+        ptr = qimage.bits()
+        ptr.setsize(qimage.byteCount())
+        arr = np.array(ptr, dtype=np.uint8).reshape((height, width, 4))
+        return arr[..., :3]
 
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Control:
@@ -818,10 +930,12 @@ class MainWindow(QMainWindow, WindowMixin):
         self.items_to_shapes[item] = shape
         self.shapes_to_items[shape] = item
         self.label_list.addItem(item)
+        self.canvas.shapes.append(shape)
+        
         for action in self.actions.onShapesPresent:
             action.setEnabled(True)
         self.update_combo_box()
-
+        
     def remove_label(self, shape):
         if shape is None:
             return

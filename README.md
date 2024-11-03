@@ -10,6 +10,7 @@ This repository is a fork of the popular image annotation tool, LabelImg, origin
 - **Popup Position**: Changed the position of pop-up windows, improved by [lsh0902](https://github.com/lsh0902).
 - **PyQt4 Deprecation**: Gradual removal of PyQt4 in progress.
 - **Polygon Vertex Logic**: Improved logic for finding polygon vertices to enhance clickability.
+- **Auto annotate**: Added the function of automatic annotation of the image using the Ultralyrics module.
 
 ## About Label Studio
 
@@ -35,12 +36,13 @@ LabelImg is now part of the Label Studio community, a modern, multi-modal data a
 
 | Key Combination    | Action                                      |
 |--------------------|---------------------------------------------|
+| Space              | Auto annotate current image                 |
 | Ctrl + u           | Load all images from a directory            |
 | Ctrl + r           | Change the default annotation target dir    |
 | Ctrl + s           | Save                                        |
 | Ctrl + d           | Copy the current label and rect box         |
 | Ctrl + Shift + d   | Delete the current image                    |
-| Space              | Flag the current image as verified          |
+| Ctrl + Space       | Flag the current image as verified          |
 | w                  | Create a rect box                           |
 | d                  | Next image                                  |
 | a                  | Previous image                              |
@@ -48,5 +50,3 @@ LabelImg is now part of the Label Studio community, a modern, multi-modal data a
 | Ctrl++             | Zoom in                                     |
 | Ctrl--             | Zoom out                                    |
 | ↑→↓←               | Move selected rect box with keyboard arrows |
-
-Feel free to explore and contribute to this enhanced version of LabelImg!
