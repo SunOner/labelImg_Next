@@ -10,23 +10,21 @@ This repository is a fork of the popular image annotation tool, LabelImg, origin
 - **Popup Position**: Changed the position of pop-up windows, improved by [lsh0902](https://github.com/lsh0902).
 - **PyQt4 Deprecation**: Gradual removal of PyQt4 in progress.
 - **Polygon Vertex Logic**: Improved logic for finding polygon vertices to enhance clickability.
-- **Auto annotate**: Added the function of automatic annotation of the image using the Ultralyrics module.
-
-## About Label Studio
-
-LabelImg is now part of the Label Studio community, a modern, multi-modal data annotation tool. Label Studio is the most flexible open-source data labeling tool for images, text, hypertext, audio, video, and time-series data. To get started, [install Label Studio](https://labelstud.io/guide/install.html) and join the [Slack community](https://label-studio.slack.com/).
+- **Auto annotate**: Added the function of automatic annotation of the image using the Ultralytics module.
 
 ### Build from Source (Windows)
 
 1. Install [Python](https://www.python.org/downloads/windows/), [PyQt5](https://www.riverbankcomputing.com/software/pyqt/download5), and [lxml](http://lxml.de/installation.html).
 2. Open `cmd` and navigate to the `labelImg` directory.
-3. Run the following command to compile resources:
-
+3. Run:
+   ```shell
+   pip install -r requirements.txt
+   ```
+4. Run:
    ```shell
    pyrcc5 -o libs/resources.py resources.qrc
    ```
-
-4. Execute the application:
+5. Execute the application:
 
    ```shell
    python labelImg.py
