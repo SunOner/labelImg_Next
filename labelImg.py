@@ -235,20 +235,22 @@ class MainWindow(QMainWindow, WindowMixin):
                       'Ctrl+O', 'open', get_str('openFileDetail'))
 
         open_dir = action(get_str('openDir'), self.open_dir_dialog,
-                          'Ctrl+u', 'open', get_str('openDir'))
+                        'Ctrl+u', 'open', get_str('openDir'))
 
         change_save_dir = action(get_str('changeSaveDir'), self.change_save_dir_dialog,
-                                 'Ctrl+r', 'open', get_str('changeSavedAnnotationDir'))
+                                'Ctrl+r', 'open', get_str('changeSavedAnnotationDir'))
 
         open_annotation = action(get_str('openAnnotation'), self.open_annotation_dialog,
-                                 'Ctrl+Shift+O', 'open', get_str('openAnnotationDetail'))
-        copy_prev_bounding = action(get_str('copyPrevBounding'), self.copy_previous_bounding_boxes, 'Ctrl+v', 'copy', get_str('copyPrevBounding'))
+                                'Ctrl+Shift+O', 'open', get_str('openAnnotationDetail'))
+        
+        copy_prev_bounding = action(get_str('copyPrevBounding'), self.copy_previous_bounding_boxes,
+                                    'Ctrl+v', 'copy', get_str('copyPrevBounding'))
 
         open_next_image = action(get_str('nextImg'), self.open_next_image,
-                                 'd', 'next', get_str('nextImgDetail'))
+                                'd', 'next', get_str('nextImgDetail'))
 
         open_prev_image = action(get_str('prevImg'), self.open_prev_image,
-                                 'a', 'prev', get_str('prevImgDetail'))
+                                'a', 'prev', get_str('prevImgDetail'))
 
         verify = action(get_str('verifyImg'), self.verify_image,
                         'Ctrl+space', 'verify', get_str('verifyImgDetail'))
@@ -272,13 +274,9 @@ class MainWindow(QMainWindow, WindowMixin):
             elif format == LabelFileFormat.CREATE_ML:
                 return '&CreateML', 'format_createml'
 
-        save_format = action(get_format_meta(self.label_file_format)[0],
-                             self.change_format, 'Ctrl+Y',
-                             get_format_meta(self.label_file_format)[1],
-                             get_str('changeSaveFormat'), enabled=True)
+        save_format = action(get_format_meta(self.label_file_format)[0], self.change_format, 'Ctrl+Y', get_format_meta(self.label_file_format)[1], get_str('changeSaveFormat'), enabled=True)
 
-        save_as = action(get_str('saveAs'), self.save_file_as,
-                         'Ctrl+Shift+S', 'save-as', get_str('saveAsDetail'), enabled=False)
+        save_as = action(get_str('saveAs'), self.save_file_as, 'Ctrl+Shift+S', 'save-as', get_str('saveAsDetail'), enabled=False)
 
         close = action(get_str('closeCur'), self.close_file, 'Ctrl+W', 'close', get_str('closeCurDetail'))
 
@@ -286,32 +284,23 @@ class MainWindow(QMainWindow, WindowMixin):
 
         reset_all = action(get_str('resetAll'), self.reset_all, None, 'resetall', get_str('resetAllDetail'))
 
-        color1 = action(get_str('boxLineColor'), self.choose_color1,
-                        'Ctrl+L', 'color_line', get_str('boxLineColorDetail'))
+        color1 = action(get_str('boxLineColor'), self.choose_color1, 'Ctrl+L', 'color_line', get_str('boxLineColorDetail'))
 
-        create_mode = action(get_str('crtBox'), self.set_create_mode,
-                             'w', 'new', get_str('crtBoxDetail'), enabled=False)
-        edit_mode = action(get_str('editBox'), self.set_edit_mode,
-                           'Ctrl+J', 'edit', get_str('editBoxDetail'), enabled=False)
+        create_mode = action(get_str('crtBox'), self.set_create_mode, 'w', 'new', get_str('crtBoxDetail'), enabled=False)
+        
+        edit_mode = action(get_str('editBox'), self.set_edit_mode, 'Ctrl+J', 'edit', get_str('editBoxDetail'), enabled=False)
 
-        create = action(get_str('crtBox'), self.create_shape,
-                        'w', 'new', get_str('crtBoxDetail'), enabled=False)
-        delete = action(get_str('delBox'), self.delete_selected_shape,
-                        'Delete', 'delete', get_str('delBoxDetail'), enabled=False)
-        copy = action(get_str('dupBox'), self.copy_selected_shape,
-                      'Ctrl+D', 'copy', get_str('dupBoxDetail'),
-                      enabled=False)
+        create = action(get_str('crtBox'), self.create_shape, 'w', 'new', get_str('crtBoxDetail'), enabled=False)
+        
+        delete = action(get_str('delBox'), self.delete_selected_shape, 'Delete', 'delete', get_str('delBoxDetail'), enabled=False)
+        
+        copy = action(get_str('dupBox'), self.copy_selected_shape, 'Ctrl+D', 'copy', get_str('dupBoxDetail'), enabled=False)
 
-        advanced_mode = action(get_str('advancedMode'), self.toggle_advanced_mode,
-                               'Ctrl+Shift+A', 'expert', get_str('advancedModeDetail'),
-                               checkable=True)
+        advanced_mode = action(get_str('advancedMode'), self.toggle_advanced_mode, 'Ctrl+Shift+A', 'expert', get_str('advancedModeDetail'), checkable=True)
 
-        hide_all = action(get_str('hideAllBox'), partial(self.toggle_polygons, False),
-                          'Ctrl+H', 'hide', get_str('hideAllBoxDetail'),
-                          enabled=False)
-        show_all = action(get_str('showAllBox'), partial(self.toggle_polygons, True),
-                          'Ctrl+A', 'hide', get_str('showAllBoxDetail'),
-                          enabled=False)
+        hide_all = action(get_str('hideAllBox'), partial(self.toggle_polygons, False), 'Ctrl+H', 'hide', get_str('hideAllBoxDetail'), enabled=False)
+        
+        show_all = action(get_str('showAllBox'), partial(self.toggle_polygons, True), 'Ctrl+A', 'hide', get_str('showAllBoxDetail'), enabled=False)
 
         help_default = action(get_str('tutorialDefault'), self.show_default_tutorial_dialog, None, 'help', get_str('tutorialDetail'))
         show_info = action(get_str('info'), self.show_info_dialog, None, 'help', get_str('info'))
@@ -325,21 +314,13 @@ class MainWindow(QMainWindow, WindowMixin):
                                              format_shortcut("Ctrl+Wheel")))
         self.zoom_widget.setEnabled(False)
 
-        zoom_in = action(get_str('zoomin'), partial(self.add_zoom, 10),
-                         'Ctrl++', 'zoom-in', get_str('zoominDetail'), enabled=False)
-        zoom_out = action(get_str('zoomout'), partial(self.add_zoom, -10),
-                          'Ctrl+-', 'zoom-out', get_str('zoomoutDetail'), enabled=False)
-        zoom_org = action(get_str('originalsize'), partial(self.set_zoom, 100),
-                          'Ctrl+=', 'zoom', get_str('originalsizeDetail'), enabled=False)
-        fit_window = action(get_str('fitWin'), self.set_fit_window,
-                            'Ctrl+F', 'fit-window', get_str('fitWinDetail'),
-                            checkable=True, enabled=False)
-        fit_width = action(get_str('fitWidth'), self.set_fit_width,
-                           'Ctrl+Shift+F', 'fit-width', get_str('fitWidthDetail'),
-                           checkable=True, enabled=False)
+        zoom_in = action(get_str('zoomin'), partial(self.add_zoom, 10), 'Ctrl++', 'zoom-in', get_str('zoominDetail'), enabled=False)
+        zoom_out = action(get_str('zoomout'), partial(self.add_zoom, -10), 'Ctrl+-', 'zoom-out', get_str('zoomoutDetail'), enabled=False)
+        zoom_org = action(get_str('originalsize'), partial(self.set_zoom, 100), 'Ctrl+=', 'zoom', get_str('originalsizeDetail'), enabled=False)
+        fit_window = action(get_str('fitWin'), self.set_fit_window, 'Ctrl+F', 'fit-window', get_str('fitWinDetail'), checkable=True, enabled=False)
+        fit_width = action(get_str('fitWidth'), self.set_fit_width, 'Ctrl+Shift+F', 'fit-width', get_str('fitWidthDetail'), checkable=True, enabled=False)
         # Group zoom controls into a list for easier toggling.
-        zoom_actions = (self.zoom_widget, zoom_in, zoom_out,
-                        zoom_org, fit_window, fit_width)
+        zoom_actions = (self.zoom_widget, zoom_in, zoom_out, zoom_org, fit_window, fit_width)
         self.zoom_mode = self.MANUAL_ZOOM
         self.scalers = {
             self.FIT_WINDOW: self.scale_fit_window,
@@ -356,29 +337,20 @@ class MainWindow(QMainWindow, WindowMixin):
                                              format_shortcut("Ctrl+Shift+Wheel")))
         self.light_widget.setEnabled(False)
 
-        light_brighten = action(get_str('lightbrighten'), partial(self.add_light, 10),
-                                'Ctrl+Shift++', 'light_lighten', get_str('lightbrightenDetail'), enabled=False)
-        light_darken = action(get_str('lightdarken'), partial(self.add_light, -10),
-                              'Ctrl+Shift+-', 'light_darken', get_str('lightdarkenDetail'), enabled=False)
-        light_org = action(get_str('lightreset'), partial(self.set_light, 50),
-                           'Ctrl+Shift+=', 'light_reset', get_str('lightresetDetail'), checkable=True, enabled=False)
+        light_brighten = action(get_str('lightbrighten'), partial(self.add_light, 10), 'Ctrl+Shift++', 'light_lighten', get_str('lightbrightenDetail'), enabled=False)
+        light_darken = action(get_str('lightdarken'), partial(self.add_light, -10), 'Ctrl+Shift+-', 'light_darken', get_str('lightdarkenDetail'), enabled=False)
+        light_org = action(get_str('lightreset'), partial(self.set_light, 50), 'Ctrl+Shift+=', 'light_reset', get_str('lightresetDetail'), checkable=True, enabled=False)
         light_org.setChecked(True)
 
         # Group light controls into a list for easier toggling.
         light_actions = (self.light_widget, light_brighten,
                          light_darken, light_org)
 
-        edit = action(get_str('editLabel'), self.edit_label,
-                      'Ctrl+E', 'edit', get_str('editLabelDetail'),
-                      enabled=False)
+        edit = action(get_str('editLabel'), self.edit_label, 'Ctrl+E', 'edit', get_str('editLabelDetail'), enabled=False)
         self.edit_button.setDefaultAction(edit)
 
-        shape_line_color = action(get_str('shapeLineColor'), self.choose_shape_line_color,
-                                  icon='color_line', tip=get_str('shapeLineColorDetail'),
-                                  enabled=False)
-        shape_fill_color = action(get_str('shapeFillColor'), self.choose_shape_fill_color,
-                                  icon='color', tip=get_str('shapeFillColorDetail'),
-                                  enabled=False)
+        shape_line_color = action(get_str('shapeLineColor'), self.choose_shape_line_color, icon='color_line', tip=get_str('shapeLineColorDetail'), enabled=False)
+        shape_fill_color = action(get_str('shapeFillColor'), self.choose_shape_fill_color, icon='color', tip=get_str('shapeFillColorDetail'), enabled=False)
 
         labels = self.dock.toggleViewAction()
         labels.setText(get_str('showHide'))
@@ -506,7 +478,7 @@ class MainWindow(QMainWindow, WindowMixin):
         # Add Chris
         self.difficult = False
 
-        # Fix the compatible issue for qt4 and qt5. Convert the QStringList to python list
+        # Fix the compatible issue for qt5. Convert the QStringList to python list
         if settings.get(SETTING_RECENT_FILES):
             if have_qstring():
                 recent_file_qstring_list = settings.get(SETTING_RECENT_FILES)
