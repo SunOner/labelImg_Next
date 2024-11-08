@@ -81,6 +81,10 @@ class MainWindow(QMainWindow, WindowMixin):
         self.default_save_dir = default_save_dir
         self.label_file_format = settings.get(SETTING_LABEL_FILE_FORMAT, LabelFileFormat.PASCAL_VOC)
 
+        # Load last used model
+        self.last_used_model = settings.get(SETTING_LAST_USED_MODEL, '')
+        self.last_image_size = settings.get(SETTING_LAST_IMAGE_SIZE, '640')
+        
         # For loading all image under a directory
         self.m_img_list = []
         self.dir_name = None
@@ -226,6 +230,16 @@ class MainWindow(QMainWindow, WindowMixin):
         self.settings_dock.setWidget(self.settings_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.settings_dock)
 
+        self.settings_layout.addWidget(QLabel("Model size:"))
+
+        self.image_size_combobox = QComboBox()
+        self.image_size_combobox.addItem('320')
+        self.image_size_combobox.addItem('480')
+        self.image_size_combobox.addItem('640')
+        self.last_image_size = settings.get(SETTING_LAST_IMAGE_SIZE, '640')
+        self.image_size_combobox.setCurrentText(self.last_image_size)
+        self.settings_layout.addWidget(self.image_size_combobox)
+        
         # Actions
         action = partial(new_action, self)
         quit = action(get_str('quit'), self.close,
@@ -551,24 +565,37 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.update()
     
     def load_models(self):
+        self.model_combobox.clear()
         model_dir = './models'
         if not os.path.exists(model_dir):
-            QMessageBox.warning(self, "Warning", f"The models folder '{model_dir}' was not found.")
+            QMessageBox.warning(self, "Warning", f"Dir with models '{model_dir}' not found.")
             return
-        model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if f.endswith('.pt')]
+        allowed_extensions = ['.pt', '.onnx', '.engine']
+        model_files = [os.path.join(model_dir, f) for f in os.listdir(model_dir) if
+                    os.path.splitext(f)[1].lower() in allowed_extensions]
+
         if not model_files:
-            QMessageBox.warning(self, "Warning", "No '.pt' model files were found in the models folder.")
+            QMessageBox.warning(self, "Warning", "In models dir models not found.")
             return
+
+        model_files.sort()
         self.model_combobox.addItems(model_files)
+
+        if self.last_used_model and self.last_used_model in model_files:
+            index = self.model_combobox.findText(self.last_used_model)
+            if index >= 0:
+                self.model_combobox.setCurrentIndex(index)
+        elif model_files:
+            self.model_combobox.setCurrentIndex(0)
     
     def auto_annotate_image(self):
         if not self.file_path:
-            QMessageBox.warning(self, "Warning", "The annotation image has not been uploaded.")
+            QMessageBox.warning(self, "Warning", "Image not loaded.")
             return
 
         image = QImage(self.file_path)
         if image.isNull():
-            QMessageBox.warning(self, "Warning", "The image could not be uploaded.")
+            QMessageBox.warning(self, "Warning", "Can't load image.")
             return
 
         image_numpy = self.qimage_to_numpy(image)
@@ -578,16 +605,24 @@ class MainWindow(QMainWindow, WindowMixin):
         device = 'cpu' if self.device_checkbox.isChecked() else 'cuda' if torch.cuda.is_available() else 'cpu'
 
         if not model_path or not os.path.exists(model_path):
-            QMessageBox.warning(self, "Warning", "The model is not selected or does not exist.")
+            QMessageBox.warning(self, "Warning", "Model not loaded or not exist.")
             return
 
-        model = YOLO(
-            model=model_path,
-            task="detect",
-            verbose=False
-        )
+        self.last_used_model = model_path
 
-        results = model.predict(source=image_numpy, conf=conf_threshold, device=device)
+        try:
+            model = YOLO(
+                model=model_path,
+                task="detect",
+                verbose=False
+            )
+        except Exception as e:
+            QMessageBox.warning(self, "Warning", f"Can't load model: {str(e)}")
+            return
+
+        selected_size = int(self.image_size_combobox.currentText())
+
+        results = model.predict(source=image_numpy, conf=conf_threshold, device=device, imgsz=selected_size)
 
         self.reset_all_shapes()
 
@@ -607,7 +642,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
                 self.add_label(shape)
 
-        self.canvas.update()  # Обновление канваса
+        self.canvas.update()
         self.set_dirty()
     
     def qimage_to_numpy(self, qimage):
@@ -1350,6 +1385,8 @@ class MainWindow(QMainWindow, WindowMixin):
         settings[SETTING_PAINT_LABEL] = self.display_label_option.isChecked()
         settings[SETTING_DRAW_SQUARE] = self.draw_squares_option.isChecked()
         settings[SETTING_LABEL_FILE_FORMAT] = self.label_file_format
+        settings[SETTING_LAST_IMAGE_SIZE] = self.image_size_combobox.currentText()
+        settings[SETTING_LAST_USED_MODEL] = self.last_used_model
         settings.save()
 
     def load_recent(self, filename):
