@@ -221,6 +221,16 @@ class MainWindow(QMainWindow, WindowMixin):
         self.conf_slider.setValue(25)
         self.settings_layout.addWidget(QLabel("Confidence Threshold:"))
         self.settings_layout.addWidget(self.conf_slider)
+        
+        # Added a slider for IOU threshold
+        self.IOU_slider = QSlider(Qt.Horizontal)
+        self.IOU_slider.setMinimum(0)
+        self.IOU_slider.setMaximum(100)
+        self.IOU_slider.setValue(25)
+        self.settings_layout.addWidget(QLabel("IOU Threshold:"))
+        self.settings_layout.addWidget(self.IOU_slider)
+        
+        
 
         self.device_checkbox = QCheckBox("Use CPU")
         self.device_checkbox.setChecked(False)
@@ -236,6 +246,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.image_size_combobox.addItem('320')
         self.image_size_combobox.addItem('480')
         self.image_size_combobox.addItem('640')
+        self.image_size_combobox.addItem('2016')
         self.last_image_size = settings.get(SETTING_LAST_IMAGE_SIZE, '640')
         self.image_size_combobox.setCurrentText(self.last_image_size)
         self.settings_layout.addWidget(self.image_size_combobox)
@@ -602,6 +613,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         model_path = self.model_combobox.currentText()
         conf_threshold = self.conf_slider.value() / 100.0
+        iou_threshold = self.IOU_slider.value() / 100.0
         device = 'cpu' if self.device_checkbox.isChecked() else 'cuda' if torch.cuda.is_available() else 'cpu'
 
         if not model_path or not os.path.exists(model_path):
@@ -622,7 +634,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         selected_size = int(self.image_size_combobox.currentText())
 
-        results = model.predict(source=image_numpy, conf=conf_threshold, device=device, imgsz=selected_size)
+        results = model.predict(source=image_numpy, conf=conf_threshold, device=device, imgsz=selected_size, iou=iou_threshold)
 
         self.reset_all_shapes()
 
