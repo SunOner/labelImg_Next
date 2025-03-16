@@ -964,7 +964,20 @@ class MainWindow(QMainWindow, WindowMixin):
         del self.items_to_shapes[item]
         self.update_combo_box()
 
+    def remove_duplicates(self, shapes):
+        seen = set()
+        unique_shapes = []
+        for (label, points, line_color, fill_color, difficult) in shapes:
+            points_tuple = tuple(points)
+            shape_key = (label, points_tuple)
+            if shape_key not in seen:
+                seen.add(shape_key)
+                unique_shapes.append((label, points, line_color, fill_color, difficult))
+        return unique_shapes
+    
     def load_labels(self, shapes):
+        shapes = self.remove_duplicates(shapes)
+        
         s = []
         for label, points, line_color, fill_color, difficult in shapes:
             shape = Shape(label=label)
